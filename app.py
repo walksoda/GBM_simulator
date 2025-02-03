@@ -140,9 +140,9 @@ if st.button("シミュレーション実行"):
         # 個別のパスは薄く表示
         for i in displayed_paths:
             ax.plot(t_display, paths_display[:, i],
-                   lw=0.5,
-                   alpha=0.2,
-                   color='gray')
+                    lw=0.8,
+                    alpha=0.4,
+                    color='gray')
 
         # 元金を最前面に表示
         ax.plot(t_display, principal_display,
