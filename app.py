@@ -198,15 +198,18 @@ if st.button("シミュレーション実行"):
                 for price_range in price_ranges:
                     range_paths = np.where(price_range)[0]
                     if len(range_paths) > 0:
-                        # 暴落の判定: 10営業日以内で20%以上の下落があったかを確認
-                        crash_count = 0
-                        for p in range_paths:
-                            path = paths[:idx+1, p]
-                            for i in range(len(path)-10):  # 10営業日のウィンドウで確認
-                                window = path[i:i+10]
-                                if np.min(window) < 0.8 * window[0]:  # 20%以上の下落
-                                    crash_count += 1
-                                    break
+                        # 暴落の判定: 10営業日ウィンドウでの下落をベクトル化して計算
+                        path_data = paths[:idx+1, range_paths]  # 対象パスのデータ
+                        has_crash = np.zeros(len(range_paths), dtype=bool)
+                        
+                        # 10日ごとにウィンドウをスライドして最大下落率を計算
+                        for i in range(0, path_data.shape[0] - 10, 10):
+                            window_start = path_data[i:i+1, :]  # 開始時点の価格 (1, n_paths)
+                            window_min = np.min(path_data[i:i+10, :], axis=0)  # 10日間の最小値
+                            # 開始価格からの下落率が閾値を超えるものを検出
+                            has_crash |= (window_min < (1 - crash_size) * window_start)
+                        
+                        crash_count = np.sum(has_crash)
                         crash_ratio = crash_count / len(range_paths) * 100
                     else:
                         crash_ratio = 0
