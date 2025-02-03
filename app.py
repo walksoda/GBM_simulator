@@ -261,6 +261,35 @@ if st.button("シミュレーション実行"):
                     分かります。
                 """.format(crash_size * 100))
         
+        # 基本統計情報と暴落分析を分離
+        basic_stats_data = []
+        crash_stats_data = []
+        for data in stats_data:
+            basic_info = {
+                "経過年数": data["経過年数"],
+                "元金": data["元金"],
+                "平均": data["平均"],
+                "最小値": data["最小値"],
+                "25%タイル": data["25%タイル"],
+                "中央値": data["中央値"],
+                "75%タイル": data["75%タイル"],
+                "最大値": data["最大値"],
+                "元本割れ確率": data["元本割れ確率"]
+            }
+            basic_stats_data.append(basic_info)
+            
+            if enable_crash:
+                crash_info = {
+                    "経過年数": data["経過年数"],
+                    "暴落(上位5%)": data["暴落(上位5%)"],
+                    "暴落(75-95%)": data["暴落(75-95%)"],
+                    "暴落(50-75%)": data["暴落(50-75%)"],
+                    "暴落(25-50%)": data["暴落(25-50%)"],
+                    "暴落(5-25%)": data["暴落(5-25%)"],
+                    "暴落(下位5%)": data["暴落(下位5%)"]
+                }
+                crash_stats_data.append(crash_info)
+
         # テーブル表示用CSS
         st.markdown("""
             <style>
@@ -272,5 +301,26 @@ if st.button("シミュレーション実行"):
             </style>
         """, unsafe_allow_html=True)
         
-        # テーブル表示
-        st.dataframe(pd.DataFrame(stats_data), hide_index=True)
+        # 基本統計情報を表示
+        st.markdown("### 基本統計情報")
+        st.dataframe(pd.DataFrame(basic_stats_data), hide_index=True)
+        
+        # 暴落分析を表示(有効な場合)
+        if enable_crash:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("### 暴落分析")
+                st.markdown("""
+                    各資産価値帯での暴落経験確率を示しています。例えば:
+                    - 「暴落(上位5%)」は、最終的に上位5%の資産価値に到達したシナリオのうち、
+                      途中で設定した規模({:.0f}%)以上の暴落を経験した割合です。
+                    - 「暴落(25-50%)」は、最終的に25-50パーセンタイルの資産価値に到達したシナリオのうち、
+                      暴落を経験した割合です。
+                    
+                    この分析により、高いリターンを得たシナリオでも、途中で大きな下落を経験している可能性が
+                    分かります。
+                """.format(crash_size * 100))
+            
+            with col2:
+                st.dataframe(pd.DataFrame(crash_stats_data), hide_index=True)
