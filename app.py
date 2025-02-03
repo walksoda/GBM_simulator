@@ -183,13 +183,14 @@ if st.button("シミュレーション実行"):
             principal_value = principal[idx]
             below_principal = np.sum(prices < principal_value) / len(prices) * 100
             # パーセンタイルの計算
-            percentiles = np.percentile(prices, [5, 25, 75, 95])
+            percentiles = np.percentile(prices, [5, 25, 50, 75, 95])
             price_ranges = [
                 (prices <= percentiles[0]),  # 0-5%
                 (percentiles[0] < prices) & (prices <= percentiles[1]),  # 5-25%
-                (percentiles[1] < prices) & (prices <= percentiles[2]),  # 25-75%
-                (percentiles[2] < prices) & (prices <= percentiles[3]),  # 75-95%
-                (percentiles[3] < prices)  # 95-100%
+                (percentiles[1] < prices) & (prices <= percentiles[2]),  # 25-50%
+                (percentiles[2] < prices) & (prices <= percentiles[3]),  # 50-75%
+                (percentiles[3] < prices) & (prices <= percentiles[4]),  # 75-95%
+                (percentiles[4] < prices)  # 95-100%
             ]
             
             # 各範囲での暴落発生割合を計算
@@ -215,7 +216,8 @@ if st.button("シミュレーション実行"):
                         crash_ratio = 0
                     crash_ratios.append(crash_ratio)
             
-            stats = {
+            # 基本統計情報
+            basic_stats = {
                 "経過年数": f"{year}年",
                 "元金": f"{principal_value:,.0f}円",
                 "平均": f"{np.mean(prices):,.0f}円",
@@ -227,16 +229,37 @@ if st.button("シミュレーション実行"):
                 "元本割れ確率": f"{below_principal:.1f}%"
             }
             
-            # 暴落情報を追加
+            # 暴落分析情報
+            crash_stats = {}
             if enable_crash:
-                stats.update({
-                    "暴落(上位5%)": f"{crash_ratios[4]:.1f}%",
-                    "暴落(75-95%)": f"{crash_ratios[3]:.1f}%",
-                    "暴落(25-75%)": f"{crash_ratios[2]:.1f}%",
+                crash_stats.update({
+                    "暴落(上位5%)": f"{crash_ratios[5]:.1f}%",
+                    "暴落(75-95%)": f"{crash_ratios[4]:.1f}%",
+                    "暴落(50-75%)": f"{crash_ratios[3]:.1f}%",
+                    "暴落(25-50%)": f"{crash_ratios[2]:.1f}%",
                     "暴落(5-25%)": f"{crash_ratios[1]:.1f}%",
                     "暴落(下位5%)": f"{crash_ratios[0]:.1f}%"
                 })
-            stats_data.append(stats)
+            
+            # 統計情報をstats_dataに追加
+            combined_stats = basic_stats.copy()
+            if enable_crash:
+                combined_stats.update(crash_stats)
+            stats_data.append(combined_stats)
+
+            # 最初の年のデータの場合、暴落分析の説明を表示
+            if year == year_steps[0] and enable_crash:
+                st.markdown("### 暴落分析について")
+                st.markdown("""
+                    各資産価値帯での暴落経験確率を示しています。例えば:
+                    - 「暴落(上位5%)」は、最終的に上位5%の資産価値に到達したシナリオのうち、
+                      設定した規模({:.0f}%)の暴落を経験した割合です。
+                    - 「暴落(25-50%)」は、最終的に25-50パーセンタイルの資産価値に到達したシナリオのうち、
+                      暴落を経験した割合です。
+                    
+                    この分析により、高いリターンを得たシナリオでも、途中で大きな下落を経験している可能性が
+                    分かります。
+                """.format(crash_size * 100))
         
         # テーブル表示用CSS
         st.markdown("""
