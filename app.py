@@ -204,7 +204,7 @@ if st.button("シミュレーション実行"):
                         
                         # 10日ごとにウィンドウをスライドして最大下落率を計算
                         for i in range(0, path_data.shape[0] - 10, 10):
-                            window_start = path_data[i:i+1, :]  # 開始時点の価格 (1, n_paths)
+                            window_start = path_data[i, :]  # 開始時点の価格
                             window_min = np.min(path_data[i:i+10, :], axis=0)  # 10日間の最小値
                             # 開始価格からの下落率が閾値を超えるものを検出
                             has_crash |= (window_min < (1 - crash_size) * window_start)
