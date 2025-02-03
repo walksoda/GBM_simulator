@@ -1,0 +1,20 @@
+# 幾何ブラウン運動シミュレーション設定
+
+# 基本パラメータ
+initial_price: 1000000    # 初期価格(円)
+expected_return: 0.05     # 期待リターン(年率)
+volatility: 0.15         # ボラティリティ(年率)
+
+# シミュレーション設定
+time_horizon: 20          # 期間(年)
+num_steps: 5040          # 時間ステップ数(20年分の営業日数)
+num_paths: 1000          # シミュレーションパス数
+
+# 積立設定
+monthly_investment: 50000     # 毎月の積立金額(円)
+bonus_investment: 100000      # ボーナス積立金額(円/回)
+investment_years: 20          # 積立期間(年)
+
+# 暴落設定
+crash_lambda: 0.1        # 暴落の発生頻度(年率、0.1は10年に1回)
+crash_size: 0.3          # 暴落の大きさ(30%)
