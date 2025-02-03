@@ -198,8 +198,15 @@ if st.button("シミュレーション実行"):
                 for price_range in price_ranges:
                     range_paths = np.where(price_range)[0]
                     if len(range_paths) > 0:
-                        # 最終価格が各範囲に入ったパスの中で、暴落が発生したパスの割合
-                        crash_count = sum(1 for p in range_paths if np.min(paths[:idx+1, p]) < 0.9 * np.max(paths[:idx+1, p]))
+                        # 暴落の判定: 10営業日以内で20%以上の下落があったかを確認
+                        crash_count = 0
+                        for p in range_paths:
+                            path = paths[:idx+1, p]
+                            for i in range(len(path)-10):  # 10営業日のウィンドウで確認
+                                window = path[i:i+10]
+                                if np.min(window) < 0.8 * window[0]:  # 20%以上の下落
+                                    crash_count += 1
+                                    break
                         crash_ratio = crash_count / len(range_paths) * 100
                     else:
                         crash_ratio = 0
