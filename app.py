@@ -182,6 +182,29 @@ if st.button("シミュレーション実行"):
             prices = paths[idx, :]
             principal_value = principal[idx]
             below_principal = np.sum(prices < principal_value) / len(prices) * 100
+            # パーセンタイルの計算
+            percentiles = np.percentile(prices, [5, 25, 75, 95])
+            price_ranges = [
+                (prices <= percentiles[0]),  # 0-5%
+                (percentiles[0] < prices) & (prices <= percentiles[1]),  # 5-25%
+                (percentiles[1] < prices) & (prices <= percentiles[2]),  # 25-75%
+                (percentiles[2] < prices) & (prices <= percentiles[3]),  # 75-95%
+                (percentiles[3] < prices)  # 95-100%
+            ]
+            
+            # 各範囲での暴落発生割合を計算
+            crash_ratios = []
+            if enable_crash:
+                for price_range in price_ranges:
+                    range_paths = np.where(price_range)[0]
+                    if len(range_paths) > 0:
+                        # 最終価格が各範囲に入ったパスの中で、暴落が発生したパスの割合
+                        crash_count = sum(1 for p in range_paths if np.min(paths[:idx+1, p]) < 0.9 * np.max(paths[:idx+1, p]))
+                        crash_ratio = crash_count / len(range_paths) * 100
+                    else:
+                        crash_ratio = 0
+                    crash_ratios.append(crash_ratio)
+            
             stats = {
                 "経過年数": f"{year}年",
                 "元金": f"{principal_value:,.0f}円",
@@ -193,6 +216,16 @@ if st.button("シミュレーション実行"):
                 "最大値": f"{np.max(prices):,.0f}円",
                 "元本割れ確率": f"{below_principal:.1f}%"
             }
+            
+            # 暴落情報を追加
+            if enable_crash:
+                stats.update({
+                    "暴落(上位5%)": f"{crash_ratios[4]:.1f}%",
+                    "暴落(75-95%)": f"{crash_ratios[3]:.1f}%",
+                    "暴落(25-75%)": f"{crash_ratios[2]:.1f}%",
+                    "暴落(5-25%)": f"{crash_ratios[1]:.1f}%",
+                    "暴落(下位5%)": f"{crash_ratios[0]:.1f}%"
+                })
             stats_data.append(stats)
         
         # テーブル表示用CSS
