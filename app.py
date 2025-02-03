@@ -110,12 +110,45 @@ if st.button("シミュレーション実行"):
         num_display_paths = min(100, paths.shape[1])
         displayed_paths = np.random.choice(paths.shape[1], num_display_paths, replace=False)
         
-        # パスの描画
+        # 信頼区間の計算(90%と95%)
+        percentiles_90 = np.percentile(paths_display, [5, 95], axis=1)
+        percentiles_95 = np.percentile(paths_display, [2.5, 97.5], axis=1)
+
+        # 95%信頼区間(薄い色で表示)
+        ax.fill_between(t_display,
+                       percentiles_95[0],
+                       percentiles_95[1],
+                       color='lightblue',
+                       alpha=0.3,
+                       label='95%信頼区間')
+
+        # 90%信頼区間(濃い色で表示)
+        ax.fill_between(t_display,
+                       percentiles_90[0],
+                       percentiles_90[1],
+                       color='blue',
+                       alpha=0.3,
+                       label='90%信頼区間')
+
+        # 中央値の線
+        median_line = np.median(paths_display, axis=1)
+        ax.plot(t_display, median_line,
+               'r--',
+               lw=2,
+               label='中央値')
+
+        # 個別のパスは薄く表示
         for i in displayed_paths:
-            ax.plot(t_display, paths_display[:, i], lw=1, alpha=0.5)
-        
-        # 元金を太線で描画
-        ax.plot(t_display, principal_display, 'k-', lw=2, label='元金')
+            ax.plot(t_display, paths_display[:, i],
+                   lw=0.5,
+                   alpha=0.2,
+                   color='gray')
+
+        # 元金を最前面に表示
+        ax.plot(t_display, principal_display,
+               'k-',
+               lw=2,
+               label='元金')
         
         ax.legend()
         title = "幾何ブラウン運動シミュレーション"
